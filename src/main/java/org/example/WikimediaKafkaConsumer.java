@@ -12,9 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -87,6 +85,15 @@ public class WikimediaKafkaConsumer {
       String oldLength = jsonNode.has("length") && jsonNode.get("length").has("old") ? jsonNode.get("length").get("old").asText() : "0";
       String newLength = jsonNode.has("length") && jsonNode.get("length").has("new") ? jsonNode.get("length").get("new").asText() : "0";
 
+      // Additional attributes
+      String namespace = jsonNode.has("namespace") ? jsonNode.get("namespace").asText() : "";
+      String titleUrl = jsonNode.has("title_url") ? jsonNode.get("title_url").asText() : "";
+      String comment = jsonNode.has("comment") ? jsonNode.get("comment").asText() : "";
+      boolean bot = jsonNode.has("bot") && jsonNode.get("bot").asBoolean();
+      boolean minor = jsonNode.has("minor") && jsonNode.get("minor").asBoolean();
+      boolean patrolled = jsonNode.has("patrolled") && jsonNode.get("patrolled").asBoolean();
+      String parsedComment = jsonNode.has("parsedcomment") ? jsonNode.get("parsedcomment").asText() : "";
+
       // Log the extracted information
       log.info("Event Type: {}", eventType);
       log.info("Title: {}", title);
@@ -95,23 +102,34 @@ public class WikimediaKafkaConsumer {
       log.info("Notify URL: {}", notifyUrl);
       log.info("Old Length: {}", oldLength);
       log.info("New Length: {}", newLength);
+      log.info("Namespace: {}", namespace);
+      log.info("Title URL: {}", titleUrl);
+      log.info("Comment: {}", comment);
+      log.info("Bot: {}", bot);
+      log.info("Minor: {}", minor);
+      log.info("Patrolled: {}", patrolled);
+      log.info("Parsed Comment: {}", parsedComment);
 
       // Save the information to a CSV file
-      saveToCsv(eventType, title, user, timestamp, oldLength, newLength);
+      saveToCsv(eventType, title, user, timestamp, oldLength, newLength, namespace, titleUrl, comment, bot, minor, patrolled, parsedComment);
 
     } catch (IOException e) {
       log.error("Error processing Wikimedia Event Data: {}", e.getMessage());
     }
   }
 
-  private static void saveToCsv(String eventType, String title, String user, String timestamp, String oldLength, String newLength) {
+  private static void saveToCsv(String eventType, String title, String user, String timestamp,
+                                String oldLength, String newLength, String namespace, String titleUrl, String comment,
+                                boolean bot, boolean minor, boolean patrolled, String parsedComment) {
     // Define the CSV file path
     if (eventType.isEmpty() && title.isEmpty() && user.isEmpty() && timestamp.isEmpty()) return;
-    String csvFilePath = "wikimedia_events.csv";
+    String csvFilePath = "wikimedia_events3.csv";
 
     try (FileWriter writer = new FileWriter(csvFilePath, true)) {
       // Append data to the CSV file
-      writer.append(String.join(",", eventType, title, user, timestamp, oldLength, newLength));
+      writer.append(String.join(",", eventType, title, user, timestamp, oldLength, newLength,
+              namespace, titleUrl, comment, String.valueOf(bot), String.valueOf(minor),
+              String.valueOf(patrolled), parsedComment));
       writer.append("\n");
 
       log.info("Data saved to CSV file: {}", csvFilePath);
@@ -121,5 +139,6 @@ public class WikimediaKafkaConsumer {
       e.printStackTrace(); // Add this line to print the full stack trace
     }
   }
+
 }
 
