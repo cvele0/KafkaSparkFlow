@@ -3,6 +3,8 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+# Ignore files with the pattern wikimedia_events*.csv
+wikimedia_events*.csv
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
